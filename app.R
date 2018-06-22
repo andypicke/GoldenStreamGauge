@@ -10,6 +10,7 @@
 
 # Load Libraries
 library(shiny)
+library(leaflet)
 library(waterData)
 library(snotelr)
 library(lubridate)
@@ -36,7 +37,10 @@ ui <- fluidPage(
     
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput("tsPlot",width = '100%')
+      tabsetPanel(
+        tabPanel('time-series',plotOutput("tsPlot",width = '100%')),
+        tabPanel('map',leafletOutput("map",width = '100%'))
+        )
     )
   )
 )
@@ -80,7 +84,7 @@ server <- function(input, output) {
   #---------------------------------------------
 
   dat_comb <- reactive({
-   inner_join(stream_dat(),snotel_dat,by=c("dates"="date"))
+   left_join(stream_dat(),snotel_dat,by=c("dates"="date"))
   })
   
     
@@ -91,12 +95,12 @@ server <- function(input, output) {
   output$tsPlot <- renderPlot({
     p1 <- dat_comb() %>% ggplot(aes(dates,val))+
       geom_line(size=2)+
-      ylab('Streamflow')+
+      ylab('Streamflow [ft^3/s]')+
       ggtitle("Timeseries at Loveland Basin Snotel and Clear Creek Stream Gauge",subtitle =  "Clear Creek Golden Station")
 
     p2 <- dat_comb() %>% ggplot(aes(dates,snow_water_equivalent))+
       geom_col()+
-      ylab('Snow Water Equivalent')#+
+      ylab('Snow Water Equiv. [mm]')#+
       ggtitle("Timeseries of SWE",subtitle =  "Loveland Basin Snotel Site")
   
       p3 <- dat_comb() %>% ggplot(aes(dates,temperature_mean*(9/5)+32))+
@@ -106,13 +110,27 @@ server <- function(input, output) {
       
       p4 <- dat_comb() %>% ggplot(aes(dates,precipitation))+
         geom_col()+
-        ylab('Precipitation')##+
+        ylab('Precipitation [mm]')##+
       #      ggtitle("Timeseries of Av Temp",subtitle =  "Loveland Basin Snotel Site")
       
     gridExtra::grid.arrange(p1,p2,p4,p3,nrow=4)
       },height=800)
   
   
+  #---------------------------------------------
+  # Plot map of station locations
+  #---------------------------------------------
+  
+#  info_loveland <- snotel_info() %>% filter(site_id==602)
+  m<-leaflet() %>%
+    addTiles() %>%  # Add default OpenStreetMap map tiles
+    addMarkers(lng=-105.9, lat=39.67, popup="Loveland Basin Snotel Site") %>% 
+   addMarkers(lng=-105.235, lat=39.753, popup="USGS Stream Gauge")
+
+
+  output$map <- renderLeaflet(
+  m
+  )
   
   
   #---------------------------------------------

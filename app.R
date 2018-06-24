@@ -71,20 +71,30 @@ server <- function(input, output) {
   stat_code <- '00003' # daily mean
   var_code <- '00060' # streamflow (discharge)
   
-  stream_dat <- reactive({
+  stream_dat_golden <- reactive({
     importDVs(staid = '06719505',code = var_code, stat=stat_code,sdate = input$startdate, edate = input$enddate) %>% 
       mutate(year=year(dates)) %>%
       mutate(month=month(dates)) %>% 
-      mutate(yday=yday(dates))
+      mutate(yday=yday(dates))%>% 
+      mutate(name='golden')
   })
   
+  stream_dat_lawson <- reactive({
+    importDVs(staid = '06716500',code = var_code, stat=stat_code,sdate = input$startdate, edate = input$enddate) %>% 
+      mutate(year=year(dates)) %>%
+      mutate(month=month(dates)) %>% 
+      mutate(yday=yday(dates)) %>% 
+      mutate(name='lawson')
+  })
 
+  stream_dat_both <- reactive({bind_rows(stream_dat_golden(),stream_dat_lawson())})
+  
   #---------------------------------------------
   # Join snotel and stream gauge data so we can plot them together easily
   #---------------------------------------------
 
   dat_comb <- reactive({
-   left_join(stream_dat(),snotel_dat,by=c("dates"="date"))
+   left_join(stream_dat_both(),snotel_dat,by=c("dates"="date"))
   })
   
     
@@ -93,28 +103,29 @@ server <- function(input, output) {
   #---------------------------------------------
   
   output$tsPlot <- renderPlot({
-    p1 <- dat_comb() %>% ggplot(aes(dates,val))+
-      geom_line(size=2)+
+    p1 <- dat_comb() %>% ggplot(aes(dates,val,col=name))+
+      geom_line(size=2,show.legend=FALSE)+
       ylab('Streamflow [ft^3/s]')+
-      ggtitle("Timeseries at Loveland Basin Snotel and Clear Creek Stream Gauge",subtitle =  "Clear Creek Golden Station")
-
+      ggtitle("Timeseries at Loveland Basin Snotel and Clear Creek Stream Gauges",subtitle =  "Red= Golden,blue=Lawson")
+    
     p2 <- dat_comb() %>% ggplot(aes(dates,snow_water_equivalent))+
       geom_col()+
       ylab('Snow Water Equiv. [mm]')#+
-      ggtitle("Timeseries of SWE",subtitle =  "Loveland Basin Snotel Site")
-  
-      p3 <- dat_comb() %>% ggplot(aes(dates,temperature_mean*(9/5)+32))+
-        geom_line(size=2)+
-        ylab('Mean Temperature [F]')##+
-#      ggtitle("Timeseries of Av Temp",subtitle =  "Loveland Basin Snotel Site")
-      
-      p4 <- dat_comb() %>% ggplot(aes(dates,precipitation))+
-        geom_col()+
-        ylab('Precipitation [mm]')##+
-      #      ggtitle("Timeseries of Av Temp",subtitle =  "Loveland Basin Snotel Site")
-      
+    ggtitle("Timeseries of SWE",subtitle =  "Loveland Basin Snotel Site")
+    
+    p3 <- dat_comb() %>% ggplot(aes(dates,temperature_mean*(9/5)+32))+
+      geom_line(size=2)+
+      ylab('Mean Temperature [F]')+
+      geom_smooth(method='loess',span=0.1)##+
+    
+    #      ggtitle("Timeseries of Av Temp",subtitle =  "Loveland Basin Snotel Site")
+    
+    p4 <- dat_comb() %>% ggplot(aes(dates,precipitation))+
+      geom_col()+
+      ylab('Precipitation [mm]')
+    
     gridExtra::grid.arrange(p1,p2,p4,p3,nrow=4)
-      },height=800)
+  },height=800)
   
   
   #---------------------------------------------
@@ -125,8 +136,8 @@ server <- function(input, output) {
   m<-leaflet() %>%
     addTiles() %>%  # Add default OpenStreetMap map tiles
     addMarkers(lng=-105.9, lat=39.67, popup="Loveland Basin Snotel Site") %>% 
-   addMarkers(lng=-105.235, lat=39.753, popup="USGS Stream Gauge")
-
+    addMarkers(lng=-105.235, lat=39.753, popup="USGS Stream Gauge: Golden")  %>% 
+    addMarkers(lng=-105.62, lat=39.75, popup="USGS Stream Gauge: Lawson")
 
   output$map <- renderLeaflet(
   m

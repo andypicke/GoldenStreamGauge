@@ -38,8 +38,9 @@ ui <- fluidPage(
     # Show a plot of the generated distribution
     mainPanel(
       tabsetPanel(
-        tabPanel('time-series',plotOutput("tsPlot",width = '100%')),
-        tabPanel('map',leafletOutput("map",width = '100%'))
+        tabPanel('Time-series',plotOutput("tsPlot",width = '100%')),
+        tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
+        tabPanel('About')
         )
     )
   )
@@ -102,29 +103,35 @@ server <- function(input, output) {
   # Plot stream flow
   #---------------------------------------------
   
+  x_min <- reactive({min(dat_comb()$dates)})
+  x_max <- reactive({max(dat_comb()$dates)})
+  
   output$tsPlot <- renderPlot({
     p1 <- dat_comb() %>% ggplot(aes(dates,val,col=name))+
       geom_line(size=2,show.legend=FALSE)+
       ylab('Streamflow [ft^3/s]')+
-      ggtitle("Timeseries at Loveland Basin Snotel and Clear Creek Stream Gauges",subtitle =  "Red= Golden,blue=Lawson")
+      ggtitle("Timeseries at Loveland Basin Snotel and Clear Creek Stream Gauges",subtitle =  "Red= Golden,blue=Lawson")+
+      scale_x_date( limits = c( x_min(), x_max() ) )
     
     p2 <- dat_comb() %>% ggplot(aes(dates,snow_water_equivalent))+
       geom_col()+
-      ylab('Snow Water Equiv. [mm]')#+
-    ggtitle("Timeseries of SWE",subtitle =  "Loveland Basin Snotel Site")
+      ylab('Snow Water Equiv. [mm]')+
+      scale_x_date( limits = c( x_min(), x_max() ) )
+    #
     
     p3 <- dat_comb() %>% ggplot(aes(dates,temperature_mean*(9/5)+32))+
       geom_line(size=2)+
       ylab('Mean Temperature [F]')+
-      geom_smooth(method='loess',span=0.1)##+
-    
-    #      ggtitle("Timeseries of Av Temp",subtitle =  "Loveland Basin Snotel Site")
+      geom_smooth(method='loess',span=0.1)+
+      scale_x_date( limits = c( x_min(), x_max() ) )
     
     p4 <- dat_comb() %>% ggplot(aes(dates,precipitation))+
       geom_col()+
-      ylab('Precipitation [mm]')
+      ylab('Precipitation [mm]')+
+      scale_x_date( limits = c( x_min(), x_max() ) )
     
     gridExtra::grid.arrange(p1,p2,p4,p3,nrow=4)
+    
   },height=800)
   
   
@@ -134,7 +141,8 @@ server <- function(input, output) {
   
 #  info_loveland <- snotel_info() %>% filter(site_id==602)
   m<-leaflet() %>%
-    addTiles() %>%  # Add default OpenStreetMap map tiles
+    addProviderTiles(providers$OpenTopoMap) %>% 
+    #addTiles() %>%  # Add default OpenStreetMap map tiles
     addMarkers(lng=-105.9, lat=39.67, popup="Loveland Basin Snotel Site") %>% 
     addMarkers(lng=-105.235, lat=39.753, popup="USGS Stream Gauge: Golden")  %>% 
     addMarkers(lng=-105.62, lat=39.75, popup="USGS Stream Gauge: Lawson")

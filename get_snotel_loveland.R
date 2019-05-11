@@ -2,15 +2,17 @@
 # Download snotel data for loveland station; used in shiny app. 
 # I pre-download to speed up response time of app.
 #
-#
+# 2019/01/13 - Updated for new version of snotelr package
 #
 
 library(snotelr)
 library(dplyr)
-dat_loveland <- snotelr::download_snotel(site_id = 602,internal = TRUE)
-df_loveland <- dat_loveland[[1]] %>% 
-  select(-c(network,state,site_name,description,start,end,latitude,longitude,elev,county,site_id))
+dat_loveland <- snotelr::snotel_download(site_id = 602,internal = TRUE)
+df_loveland <- dat_loveland %>% 
+  dplyr::select(-c(network,state,site_name,description,start,end,latitude,longitude,elev,county,site_id))
 df_loveland$date <- as.Date(df_loveland$date)
+df_loveland <- df_loveland %>% mutate(year=as.factor(lubridate::year(date)), yday=lubridate::yday(date))
 saveRDS(df_loveland,file='data/LB_snotel.rds')
 
+#df %>% ggplot(aes(yday,snow_water_equivalent,group=year))+geom_line(aes(col=as.factor(year)))+xlim(0,100)
 

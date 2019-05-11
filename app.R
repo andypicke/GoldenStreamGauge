@@ -1,12 +1,14 @@
+#---------------------------------------------
+#
+# Description: A Shiny web app to explore streamflow along Clear Creek
+# in Golden,CO, and related weather and snowpack data.s
 #
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
 #
-# Find out more about building applications with Shiny here:
+# Author: Andy Pickering
 #
-#    http://shiny.rstudio.com/
-#
-
+#---------------------------------------------
 
 # Load Libraries
 library(shiny)
@@ -40,11 +42,11 @@ ui <- fluidPage(
       tabsetPanel(
         tabPanel('Time-series',plotOutput("tsPlot",width = '100%')),
         tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
-        tabPanel('About')
-        )
-    )
-  )
-)
+        tabPanel('About',h4("Snotel data is obtained using the 'snotelr' R package. Streamflow data is obtained using the 'waterData' package. "))
+      )
+    ) #mainPanel
+  )#sidebarLayout
+)#fluidPagea
 
 
 
@@ -57,27 +59,24 @@ server <- function(input, output) {
   
   
   #---------------------------------------------
-  # Download snotel data
+  # Read in snotel data (pre-downloaded to save time)
   #---------------------------------------------
   
-#  snotel <- snotelr::download_snotel(site_id = 602,internal = TRUE)
-#  snotel_dat <- snotel[[1]] %>% 
-#    select(-c(network,state,site_name,description,start,end,latitude,longitude,elev,county,site_id)) %>% #mutate(date = as.Date(date))
- snotel_dat <- readRDS('data/LB_snotel.rds') 
+  snotel_dat <- readRDS('data/LB_snotel.rds') 
   
   
   #---------------------------------------------
   # Download stream gauge data
   #---------------------------------------------
   stat_code <- '00003' # daily mean
-  var_code <- '00060' # streamflow (discharge)
+  var_code  <- '00060' # streamflow (discharge)
   
   stream_dat_golden <- reactive({
     importDVs(staid = '06719505',code = var_code, stat=stat_code,sdate = input$startdate, edate = input$enddate) %>% 
       mutate(year=year(dates)) %>%
       mutate(month=month(dates)) %>% 
       mutate(yday=yday(dates))%>% 
-      mutate(name='golden')
+      mutate(name='Golden')
   })
   
   stream_dat_lawson <- reactive({
@@ -85,20 +84,22 @@ server <- function(input, output) {
       mutate(year=year(dates)) %>%
       mutate(month=month(dates)) %>% 
       mutate(yday=yday(dates)) %>% 
-      mutate(name='lawson')
+      mutate(name='Lawson')
   })
-
-  stream_dat_both <- reactive({bind_rows(stream_dat_golden(),stream_dat_lawson())})
+  
+  stream_dat_both <- reactive({
+    bind_rows(stream_dat_golden(),stream_dat_lawson())
+  })
   
   #---------------------------------------------
   # Join snotel and stream gauge data so we can plot them together easily
   #---------------------------------------------
-
+  
   dat_comb <- reactive({
-   left_join(stream_dat_both(),snotel_dat,by=c("dates"="date"))
+    left_join(stream_dat_both(),snotel_dat,by=c("dates"="date"))
   })
   
-    
+  
   #---------------------------------------------
   # Plot stream flow
   #---------------------------------------------
@@ -107,25 +108,33 @@ server <- function(input, output) {
   x_max <- reactive({max(dat_comb()$dates)})
   
   output$tsPlot <- renderPlot({
-    p1 <- dat_comb() %>% ggplot(aes(dates,val,col=name))+
+    
+    # Streamflow
+    p1 <- dat_comb() %>% 
+      ggplot(aes(dates,val,col=name))+
       geom_line(size=2,show.legend=FALSE)+
       ylab('Streamflow [ft^3/s]')+
       ggtitle("Timeseries at Loveland Basin Snotel and Clear Creek Stream Gauges",subtitle =  "Red= Golden,blue=Lawson")+
       scale_x_date( limits = c( x_min(), x_max() ) )
     
-    p2 <- dat_comb() %>% ggplot(aes(dates,snow_water_equivalent))+
+    # SWE
+    p2 <- dat_comb() %>% 
+      ggplot(aes(dates,snow_water_equivalent))+
       geom_col()+
       ylab('Snow Water Equiv. [mm]')+
       scale_x_date( limits = c( x_min(), x_max() ) )
-    #
     
-    p3 <- dat_comb() %>% ggplot(aes(dates,temperature_mean*(9/5)+32))+
+    # Temperature
+    p3 <- dat_comb() %>% 
+      ggplot(aes(dates,temperature_mean*(9/5)+32))+
       geom_line(size=2)+
       ylab('Mean Temperature [F]')+
       geom_smooth(method='loess',span=0.1)+
       scale_x_date( limits = c( x_min(), x_max() ) )
     
-    p4 <- dat_comb() %>% ggplot(aes(dates,precipitation))+
+    # Precipitation
+    p4 <- dat_comb() %>% 
+      ggplot(aes(dates,precipitation))+
       geom_col()+
       ylab('Precipitation [mm]')+
       scale_x_date( limits = c( x_min(), x_max() ) )
@@ -139,16 +148,15 @@ server <- function(input, output) {
   # Plot map of station locations
   #---------------------------------------------
   
-#  info_loveland <- snotel_info() %>% filter(site_id==602)
   m<-leaflet() %>%
     addProviderTiles(providers$OpenTopoMap) %>% 
     #addTiles() %>%  # Add default OpenStreetMap map tiles
     addMarkers(lng=-105.9, lat=39.67, popup="Loveland Basin Snotel Site") %>% 
     addMarkers(lng=-105.235, lat=39.753, popup="USGS Stream Gauge: Golden")  %>% 
     addMarkers(lng=-105.62, lat=39.75, popup="USGS Stream Gauge: Lawson")
-
+  
   output$map <- renderLeaflet(
-  m
+    m
   )
   
   

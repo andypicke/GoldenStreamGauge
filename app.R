@@ -20,6 +20,8 @@ library(ggplot2)
 theme_set(theme_gray(base_size = 18))
 library(dplyr)
 
+
+
 #=================================================
 # Define UI for application 
 #=================================================
@@ -40,7 +42,7 @@ ui <- fluidPage(
       tabsetPanel(
         tabPanel('Time-series',plotOutput("tsPlot",width = '100%')),
         tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
-        tabPanel('About',h4("Snotel data is obtained using the 'snotelr' R package. Streamflow data is obtained using the 'waterData' package. "))
+        tabPanel('About',h4("This Shiny App visualizes streamflow on Clear Creek near Golden CO, as well as related weather and snowpack conditions. The main figure shows (1) Clear Creek streamflow at 2 USGS stream gauge stations (2) Snowpack from a snotel station at Loveland Basin, (3) Precipiation from the snotel station, and (4) Average temperature from the snotel station. There is also a tab with a map showing the locations of the stream gauges and snotel station. Snotel data is obtained using the 'snotelr' R package. Streamflow data is from USGS stream gauges and obtained using the 'waterData' package. "))
       )
     ) #mainPanel
   )#sidebarLayout
@@ -165,4 +167,3 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-

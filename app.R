@@ -20,8 +20,6 @@ library(ggplot2)
 theme_set(theme_gray(base_size = 18))
 library(dplyr)
 
-
-
 #=================================================
 # Define UI for application 
 #=================================================

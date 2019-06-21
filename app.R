@@ -37,6 +37,7 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel('Time-series',plotlyOutput("tsPlot",width = '100%',height = 800)),
+        tabPanel('Yearly Comparison',plotlyOutput("streamflow")),
         tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
         tabPanel('About',h4("This app visualizes streamflow conditions along Clear Creek in Golden CO, as well as related snowpack and weather conditions, for a date range selected"),
                  h4("The main figure shows 4 plots. Note they are interactive so you can pan, zoom, select etc.. "),
@@ -133,6 +134,21 @@ server <- function(input, output) {
     
     p
     
+  }) # renderPlotly
+  
+  
+  
+  #---------------------------------------------
+  # Plot comparing streamflow between years
+  #---------------------------------------------
+  
+  output$streamflow <- renderPlotly({
+    stream_dat_golden() %>% 
+      plot_ly(x=~yday, y=~val) %>% 
+      add_lines(color=~as.factor(year)) %>% 
+      layout(xaxis=list(title="Yearday"),
+             yaxis=list(title="Streamflow [ft^3/s]"),
+             title="Streamflow at Golden During Different Years")
   }) # renderPlotly
   
   

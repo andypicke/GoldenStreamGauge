@@ -1,7 +1,7 @@
 #---------------------------------------------
 #
 # Description: A Shiny web app to explore streamflow along Clear Creek
-# in Golden,CO, and related weather and snowpack data.s
+# in Golden,CO, and related weather and snowpack data.
 #
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
@@ -125,7 +125,7 @@ server <- function(input, output) {
     # Temperature
     p4 <- snotel_dat() %>% 
       filter(date>=min(stream_dat_both()$dates)) %>% 
-      plot_ly(x=~date, y=~temperature_mean*(9/5)+32) %>% # Conver to fahrenheit
+      plot_ly(x=~date, y=~temperature_mean*(9/5)+32) %>% # Convert to fahrenheit
       add_lines(name='Temp',color=I("Black")) %>% 
       layout(xaxis=list(title="Date"),
              yaxis=list(title="Mean Temp. [F]")) 

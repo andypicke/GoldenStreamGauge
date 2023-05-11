@@ -109,6 +109,8 @@ server <- function(input, output) {
       plot_ly(x=~dates, y=~val) %>% 
       add_lines(data=stream_dat_both() %>% filter(name=='Golden'), name='Golden') %>% 
       add_lines(data=stream_dat_both() %>% filter(name=='Lawson'), name='Lawson') %>% 
+      add_lines(x=lubridate::ymd("2021-06-08"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="red")) %>% 
+      add_lines(x=lubridate::ymd("2021-06-18"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="green")) %>% 
       layout(xaxis=list(title="Date"),
              yaxis=list(title="Streamflow [ft^3/s]"))
     

@@ -18,6 +18,18 @@ library(lubridate)
 library(dplyr)
 library(plotly)
 
+
+#---------------------------------------------
+# Read in snotel data (pre-downloaded to save time)
+#---------------------------------------------
+
+#snotel_dat <- reactive({
+#  readRDS('data/LB_snotel.rds') 
+#})
+
+snotel_dat <- readRDS('data/LB_snotel.rds') 
+
+
 #=================================================
 # Define UI for application 
 #=================================================
@@ -30,7 +42,8 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       dateInput("startdate",label = "Startdate",val='2018-01-01'),
-      dateInput("enddate",label = "Enddate",value=Sys.Date(),max = Sys.Date())
+      dateInput("enddate",label = "Enddate",value=Sys.Date(),max = Sys.Date()),
+      h5(paste('Most recent snotel data included:',as.character(max(snotel_dat$date))))
     ),
     
     # Set up mainPanel and tabs
@@ -61,13 +74,6 @@ ui <- fluidPage(
 #=================================================
 server <- function(input, output) {
   
-  #---------------------------------------------
-  # Read in snotel data (pre-downloaded to save time)
-  #---------------------------------------------
-  
-  snotel_dat <- reactive({
-    readRDS('data/LB_snotel.rds') 
-  })
   
   #---------------------------------------------
   # Download stream gauge data
@@ -107,7 +113,7 @@ server <- function(input, output) {
              yaxis=list(title="Streamflow [ft^3/s]"))
     
     # Snowpack
-    p2 <- snotel_dat() %>% 
+    p2 <- snotel_dat %>% 
       filter(date>=min(stream_dat_both()$dates)) %>% 
       plot_ly(x=~date,y=~snow_water_equivalent) %>% 
       add_lines(name='SWE',fill="tozeroy",color=I("Blue")) %>% 
@@ -115,7 +121,7 @@ server <- function(input, output) {
              yaxis=list(title="Snow Water Equiv. [mm]"))
     
     # Precipitation
-    p3 <- snotel_dat() %>% 
+    p3 <- snotel_dat %>% 
       filter(date>=min(stream_dat_both()$dates)) %>% 
       plot_ly(x=~date,y=~precipitation) %>% 
       add_bars(name='Precip', color=I("Black")) %>% 
@@ -123,7 +129,7 @@ server <- function(input, output) {
              yaxis=list(title="Precipitation [mm]"))
     
     # Temperature
-    p4 <- snotel_dat() %>% 
+    p4 <- snotel_dat %>% 
       filter(date>=min(stream_dat_both()$dates)) %>% 
       plot_ly(x=~date, y=~temperature_mean*(9/5)+32) %>% # Convert to fahrenheit
       add_lines(name='Temp',color=I("Black")) %>% 

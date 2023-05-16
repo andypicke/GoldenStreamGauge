@@ -133,8 +133,7 @@ server <- function(input, output) {
     # Temperature
     p4 <- snotel_dat %>% 
       filter(date>=min(stream_dat_both()$dates)) %>% 
-      plot_ly(x=~date, y=~temperature_mean*(9/5)+32) %>% # Convert to fahrenheit
-      add_lines(name='Temp',color=I("Black")) %>% 
+      plot_ly(type='scatter',x=~date, y=~temperature_mean*(9/5)+32,name='Temp',color=I("Black")) %>% # Convert to fahrenheit
       layout(xaxis=list(title="Date"),
              yaxis=list(title="Mean Temp. [F]")) 
     

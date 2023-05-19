@@ -50,7 +50,7 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel('Time-series',plotlyOutput("tsPlot",width = '100%',height = 800)),
-        tabPanel('Yearly Comparison',plotlyOutput("streamflow")),
+        tabPanel('Yearly Comparison',plotlyOutput("yearly_comp")),
         tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
         tabPanel('About',h4("This app visualizes streamflow conditions along Clear Creek in Golden CO, as well as related snowpack and weather conditions, for a date range selected"),
                  h4("The main figure shows 4 plots. Note they are interactive so you can pan, zoom, select etc.. "),
@@ -109,8 +109,9 @@ server <- function(input, output) {
       plot_ly(x=~dates, y=~val) %>% 
       add_lines(data=stream_dat_both() %>% filter(name=='Golden'), name='Golden') %>% 
       add_lines(data=stream_dat_both() %>% filter(name=='Lawson'), name='Lawson') %>% 
-      add_lines(x=lubridate::ymd("2021-06-08"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="red")) %>% 
-      add_lines(x=lubridate::ymd("2021-06-18"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="green")) %>% 
+      add_lines(x=lubridate::ymd("2021-06-08"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Closed') %>% 
+      add_lines(x=lubridate::ymd("2022-06-14"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Closed') %>% 
+      add_lines(x=lubridate::ymd("2021-06-18"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="green",dash='dash'),name='Opened') %>% 
       layout(xaxis=list(title="Date"),
              yaxis=list(title="Streamflow [ft^3/s]"))
     
@@ -149,15 +150,32 @@ server <- function(input, output) {
   # Plot comparing streamflow between years
   #---------------------------------------------
   
-  output$streamflow <- renderPlotly({
-    stream_dat_golden() %>% 
+  output$yearly_comp <- renderPlotly({
+    
+    sf <- stream_dat_golden() %>% 
       plot_ly(x=~yday, y=~val) %>% 
       add_lines(color=~as.factor(year)) %>% 
       layout(xaxis=list(title="Yearday"),
              yaxis=list(title="Streamflow [ft^3/s]"),
              title="Streamflow at Golden During Different Years")
+    #  }) # renderPlotly
+    
+    
+    #---------------------------------------------
+    # Plot comparing snowpack (SWE) between years
+    #---------------------------------------------
+    
+    #  output$swe_plot <- renderPlotly({
+    swe <- snotel_dat %>% 
+      filter(date>=min(stream_dat_both()$dates)) %>% 
+      plot_ly(x=~yday,y=~snow_water_equivalent) %>% 
+      add_lines(color=~as.factor(year)) %>% 
+      layout(xaxis=list(title="Yearday"),
+             yaxis=list(title="SWE"))
+    
+    yearly_comp <- subplot(sf,swe,nrows = 2, shareX = TRUE, shareY = FALSE, titleY = TRUE,margin = 0.1)# %>% hide_legend()
+    
   }) # renderPlotly
-  
   
   #---------------------------------------------
   # Plot map of station locations using leaflet

@@ -50,7 +50,7 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel('Time-series',plotlyOutput("tsPlot",width = '100%',height = 800)),
-        tabPanel('Yearly Comparison',plotlyOutput("yearly_comp")),
+        tabPanel('Yearly Comparison',plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
         tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
         tabPanel('About',h4("This app visualizes streamflow conditions along Clear Creek in Golden CO, as well as related snowpack and weather conditions, for a date range selected"),
                  h4("The main figure shows 4 plots. Note they are interactive so you can pan, zoom, select etc.. "),
@@ -58,9 +58,14 @@ ui <- fluidPage(
                  h5("(2) Snow water equivalent (ie snowpack) at the Loveland Basin snotel site."),
                  h5("(3) Precipitation at the snotel site."),
                  h5("(4) Average temperature at the snotel site."),
-                 h4("Snotel data (snow water equivalent, precipitation, and temperature) is from a station at Loveland Basin (near Clear Creek source) and obtained using the 'snotelr' R package. Streamflow data is from USGS stream gauges along Clear Creek and obtained using the 'waterData' package. The map tab shows the location of each station. Source code is available on github at: "),
-                 a(href="https://github.com/andypicke/GoldenStreamGauge","GoldenStreamGauge"))
-      )
+                 h4("You can also view stream gauge data and camera at the",
+                    a(href="https://waterdata.usgs.gov/monitoring-location/06719505/#parameterCode=00060&period=P7D&compare=true","USGS website")),
+                 h4("Check City of Golden Clear Creek",
+                    a(href="https://www.visitgolden.com/plan-your-visit/creek-info/","status")),
+                 h4("Snotel data (snow water equivalent, precipitation, and temperature) is from a station at Loveland Basin (near Clear Creek source) and obtained using the 'snotelr' R package. Streamflow data is from USGS stream gauges along Clear Creek and obtained using the 'waterData' package. The map tab shows the location of each station."),
+                 h4("Source code for this Shiny app is available on github at: ",
+                    a(href="https://github.com/andypicke/GoldenStreamGauge","GoldenStreamGauge"))
+      ))
     ) #mainPanel
   )#sidebarLayout
 )#fluidPage
@@ -150,22 +155,24 @@ server <- function(input, output) {
   # Plot comparing streamflow between years
   #---------------------------------------------
   
-  output$yearly_comp <- renderPlotly({
+  #output$yearly_comp <- renderPlotly({
     
-    sf <- stream_dat_golden() %>% 
+    output$sf_plot <- renderPlotly({
+      
+      sf <- stream_dat_golden() %>% 
       plot_ly(x=~yday, y=~val) %>% 
       add_lines(color=~as.factor(year)) %>% 
       layout(xaxis=list(title="Yearday"),
              yaxis=list(title="Streamflow [ft^3/s]"),
              title="Streamflow at Golden During Different Years")
-    #  }) # renderPlotly
+      }) # renderPlotly
     
     
     #---------------------------------------------
     # Plot comparing snowpack (SWE) between years
     #---------------------------------------------
     
-    #  output$swe_plot <- renderPlotly({
+    output$swe_plot <- renderPlotly({
     swe <- snotel_dat %>% 
       filter(date>=min(stream_dat_both()$dates)) %>% 
       plot_ly(x=~yday,y=~snow_water_equivalent) %>% 
@@ -173,7 +180,7 @@ server <- function(input, output) {
       layout(xaxis=list(title="Yearday"),
              yaxis=list(title="SWE"))
     
-    yearly_comp <- subplot(sf,swe,nrows = 2, shareX = TRUE, shareY = FALSE, titleY = TRUE,margin = 0.1)# %>% hide_legend()
+    #yearly_comp <- subplot(sf,swe,nrows = 2, shareX = TRUE, shareY = FALSE, titleY = TRUE,margin = 0.1)# %>% hide_legend()
     
   }) # renderPlotly
   

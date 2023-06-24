@@ -41,7 +41,7 @@ ui <- fluidPage(
   # Sidebar with a date range input
   sidebarLayout(
     sidebarPanel(
-      dateInput("startdate",label = "Startdate",val=Sys.Date()-lubridate::years(2)),
+      dateInput("startdate",label = "Startdate",val=lubridate::ymd(paste(lubridate::year(Sys.Date())-2,"-01-01"))),
       dateInput("enddate",label = "Enddate",value=Sys.Date(),max = Sys.Date()),
       h5(paste('Most recent snotel data included:',as.character(max(snotel_dat$date))))
     ),

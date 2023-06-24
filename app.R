@@ -50,6 +50,7 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel('Time-series',plotlyOutput("tsPlot",width = '100%',height = 800)),
+        #tabPanel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '100%',height = 800),#plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
         tabPanel('Yearly Comparison',plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
         tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
         tabPanel('About',h4("This app visualizes streamflow conditions along Clear Creek in Golden CO, as well as related snowpack and weather conditions, for a date range selected"),
@@ -65,7 +66,7 @@ ui <- fluidPage(
                  h4("Snotel data (snow water equivalent, precipitation, and temperature) is from a station at Loveland Basin (near Clear Creek source) and obtained using the 'snotelr' R package. Streamflow data is from USGS stream gauges along Clear Creek and obtained using the 'waterData' package. The map tab shows the location of each station."),
                  h4("Source code for this Shiny app is available on github at: ",
                     a(href="https://github.com/andypicke/GoldenStreamGauge","GoldenStreamGauge"))
-      ))
+        ))
     ) #mainPanel
   )#sidebarLayout
 )#fluidPage
@@ -157,31 +158,32 @@ server <- function(input, output) {
   #---------------------------------------------
   
   #output$yearly_comp <- renderPlotly({
+  
+  output$sf_plot <- renderPlotly({
     
-    output$sf_plot <- renderPlotly({
-      
-      sf <- stream_dat_golden() %>% 
+    sf <- stream_dat_golden() %>% 
       plot_ly(x=~yday, y=~val) %>% 
       add_lines(color=~as.factor(year)) %>% 
       layout(xaxis=list(title="Yearday"),
              yaxis=list(title="Streamflow [ft^3/s]"),
              title="Streamflow at Golden During Different Years")
-      }) # renderPlotly
-    
-    
-    #---------------------------------------------
-    # Plot comparing snowpack (SWE) between years
-    #---------------------------------------------
-    
-    output$swe_plot <- renderPlotly({
+  }) # renderPlotly
+  
+  
+  #---------------------------------------------
+  # Plot comparing snowpack (SWE) between years
+  #---------------------------------------------
+  
+  output$swe_plot <- renderPlotly({
     swe <- snotel_dat %>% 
       filter(date>=min(stream_dat_both()$dates)) %>% 
       plot_ly(x=~yday,y=~snow_water_equivalent) %>% 
       add_lines(color=~as.factor(year)) %>% 
       layout(xaxis=list(title="Yearday"),
-             yaxis=list(title="SWE"))
+             yaxis=list(title="SWE"),
+             title="Snowpack at Loveland During Different Years")
     
-    #yearly_comp <- subplot(sf,swe,nrows = 2, shareX = TRUE, shareY = FALSE, titleY = TRUE,margin = 0.1)# %>% hide_legend()
+    #yearly_comp <- subplot(sf,swe,nrows = 2, shareX = TRUE, shareY = FALSE, titleY = TRUE,margin = 0.05)# %>% hide_legend()
     
   }) # renderPlotly
   

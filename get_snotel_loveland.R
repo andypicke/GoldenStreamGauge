@@ -31,7 +31,7 @@ df_loveland <- dat_loveland %>%
 df_loveland$date <- as.Date(df_loveland$date)
 
 df_loveland <- df_loveland %>% 
-  mutate(year=as.factor(lubridate::year(date)), 
+  mutate(year=lubridate::year(date), 
          yday=lubridate::yday(date))
 
 saveRDS(df_loveland,file='data/LB_snotel.rds')

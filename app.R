@@ -83,6 +83,7 @@ server <- function(input, output) {
   stat_code <- '00003' # code for daily mean
   var_code  <- '00060' # code for streamflow (discharge)
   
+  # Golden stream gauge
   stream_dat_golden <- reactive({
     importDVs(staid = '06719505',code = var_code, stat=stat_code,sdate = input$startdate, edate = input$enddate) %>% 
       mutate(year=year(dates)) %>%
@@ -91,6 +92,7 @@ server <- function(input, output) {
       mutate(name='Golden')
   })
   
+  # Lawson stream gauge
   stream_dat_lawson <- reactive({
     importDVs(staid = '06716500',code = var_code, stat=stat_code,sdate = input$startdate, edate = input$enddate) %>% 
       mutate(year=year(dates)) %>%
@@ -99,45 +101,48 @@ server <- function(input, output) {
       mutate(name='Lawson')
   })
   
+  # combine both into one dataframe
   stream_dat_both <- reactive({
     bind_rows(stream_dat_golden(),stream_dat_lawson())
   })
   
-  # Make main figure with 4 panels
+  # combine stream gauge and snotel data into a single dataframe
+  dat_comb <-  reactive({
+    dplyr::left_join(stream_dat_both(),select(snotel_dat,-c(year,yday)),by=c("dates"="date"))
+  })
+  
+  # Make main timeseries figure with 4 panels
   output$tsPlot <- renderPlotly({
     
     # Streamflow
-    p1 <- stream_dat_both() %>% 
+    p1 <- dat_comb() %>% 
       plot_ly(x=~dates, y=~val) %>% 
-      add_lines(data=stream_dat_both() %>% filter(name=='Golden'), name='Golden') %>% 
-      add_lines(data=stream_dat_both() %>% filter(name=='Lawson'), name='Lawson') %>% 
-      add_lines(x=lubridate::ymd("2021-06-08"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
-      add_lines(x=lubridate::ymd("2022-06-14"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
-      add_lines(x=lubridate::ymd("2023-06-01"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
-      add_lines(x=lubridate::ymd("2021-06-18"),y=range(stream_dat_both()$val,na.rm = TRUE),line=list(color="green",dash='dash'),name='Opened') %>% 
+      add_lines(data=dat_comb() %>% filter(name=='Golden'), name='Golden') %>% 
+      add_lines(data=dat_comb() %>% filter(name=='Lawson'), name='Lawson') %>% 
+      add_lines(x=lubridate::ymd("2021-06-08"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
+      add_lines(x=lubridate::ymd("2022-06-14"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
+      add_lines(x=lubridate::ymd("2023-06-01"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
+      add_lines(x=lubridate::ymd("2021-06-18"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="green",dash='dash'),name='Opened') %>% 
       layout(xaxis=list(title="Date"),
              yaxis=list(title="Streamflow [ft^3/s]"))
     
     # Snowpack
-    p2 <- snotel_dat %>% 
-      filter(date>=min(stream_dat_both()$dates)) %>% 
-      plot_ly(x=~date,y=~snow_water_equivalent) %>% 
+    p2 <- dat_comb() %>% 
+      plot_ly(x=~dates,y=~snow_water_equivalent) %>% 
       add_lines(name='SWE',fill="tozeroy",color=I("Blue")) %>% 
       layout(xaxis=list(title="Date"),
              yaxis=list(title="Snow Water Equiv. [mm]"))
     
     # Precipitation
-    p3 <- snotel_dat %>% 
-      filter(date>=min(stream_dat_both()$dates)) %>% 
-      plot_ly(x=~date,y=~precipitation) %>% 
+    p3 <- dat_comb() %>% 
+      plot_ly(x=~dates,y=~precipitation) %>% 
       add_bars(name='Precip', color=I("Black")) %>% 
       layout(xaxis=list(title="Date"),
              yaxis=list(title="Precipitation [mm]"))
     
     # Temperature
-    p4 <- snotel_dat %>% 
-      filter(date>=min(stream_dat_both()$dates)) %>% 
-      plot_ly(type='scatter',x=~date, y=~temperature_mean*(9/5)+32,name='Temp',color=I("Black")) %>% # Convert to fahrenheit
+    p4 <- dat_comb() %>% 
+      plot_ly(type='scatter',x=~dates, y=~temperature_mean*(9/5)+32,name='Temp',color=I("Black")) %>% # Convert to fahrenheit
       layout(xaxis=list(title="Date"),
              yaxis=list(title="Mean Temp. [F]")) 
     
@@ -157,7 +162,8 @@ server <- function(input, output) {
   
   output$sf_plot <- renderPlotly({
     
-    sf <- stream_dat_golden() %>% 
+    sf <- dat_comb() %>% 
+      filter(name=='Golden') %>% 
       plot_ly(x=~yday, y=~val) %>% 
       add_lines(color=~as.factor(year)) %>% 
       layout(xaxis=list(title="Yearday"),
@@ -171,8 +177,7 @@ server <- function(input, output) {
   #---------------------------------------------
   
   output$swe_plot <- renderPlotly({
-    swe <- snotel_dat %>% 
-      filter(date>=min(stream_dat_both()$dates)) %>% 
+    swe <- dat_comb() %>% 
       plot_ly(x=~yday,y=~snow_water_equivalent) %>% 
       add_lines(color=~as.factor(year)) %>% 
       layout(xaxis=list(title="Yearday"),
@@ -182,6 +187,9 @@ server <- function(input, output) {
     #yearly_comp <- subplot(sf,swe,nrows = 2, shareX = TRUE, shareY = FALSE, titleY = TRUE,margin = 0.05)# %>% hide_legend()
     
   }) # renderPlotly
+  
+  
+  
   
   #---------------------------------------------
   # Plot map of station locations using leaflet

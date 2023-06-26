@@ -23,10 +23,6 @@ library(plotly)
 # Read in snotel data (pre-downloaded to save time)
 #---------------------------------------------
 
-#snotel_dat <- reactive({
-#  readRDS('data/LB_snotel.rds') 
-#})
-
 snotel_dat <- readRDS('data/LB_snotel.rds') 
 
 

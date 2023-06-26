@@ -2,3 +2,9 @@
 data/
 rsconnect/
 .Rproj.user
+.Rhistory
+.Rprofile
+R-3.5.1.pkg
+experiment_plotly.R
+needed_packages.RData
+GoldenStreamGauge.Rproj

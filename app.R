@@ -45,12 +45,8 @@ ui <- fluidPage(
     # Set up mainPanel and tabs
     mainPanel(
       tabsetPanel(
-        tabPanel('Time-series',plotlyOutput("tsPlot",width = '100%',height = 800)),
-        #tabPanel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '100%',height = 800),#plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
-        tabPanel('Yearly Comparison',plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
-        tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
-        tabPanel('About',h4("This app visualizes streamflow conditions along Clear Creek in Golden CO, as well as related snowpack and weather conditions, for a date range selected"),
-                 h4("The main figure shows 4 plots. Note they are interactive so you can pan, zoom, select etc.. "),
+        tabPanel('About',h3("Use this app to explore streamflow conditions on Clear Creek in Golden CO, as well as related snowpack and weather conditions from a snotel station near its source."),
+                 h4("The time-series figure has 4 panels (*Note they are interactive so you can pan, zoom, select etc.. "),
                  h5("(1) A timeseries of streamflow on Clear Creek from USGS stations at Golden, and from further upstream at Lawson."),
                  h5("(2) Snow water equivalent (ie snowpack) at the Loveland Basin snotel site."),
                  h5("(3) Precipitation at the snotel site."),
@@ -59,10 +55,14 @@ ui <- fluidPage(
                     a(href="https://waterdata.usgs.gov/monitoring-location/06719505/#parameterCode=00060&period=P7D&compare=true","USGS website")),
                  h4("Check City of Golden Clear Creek",
                     a(href="https://www.visitgolden.com/plan-your-visit/creek-info/","status")),
-                 h4("Snotel data (snow water equivalent, precipitation, and temperature) is from a station at Loveland Basin (near Clear Creek source) and obtained using the 'snotelr' R package. Streamflow data is from USGS stream gauges along Clear Creek and obtained using the 'waterData' package. The map tab shows the location of each station."),
+                 h5("Snotel data (snow water equivalent, precipitation, and temperature) is from a station at Loveland Basin (near Clear Creek source) and obtained using the 'snotelr' R package. Streamflow data is from USGS stream gauges along Clear Creek and obtained using the 'waterData' package. The map tab shows the location of each station."),
                  h4("Source code for this Shiny app is available on github at: ",
-                    a(href="https://github.com/andypicke/GoldenStreamGauge","GoldenStreamGauge"))
-        ))
+                    a(href="https://github.com/andypicke/GoldenStreamGauge","GoldenStreamGauge"))),
+        tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
+        tabPanel('Time-series',plotlyOutput("tsPlot",width = '100%',height = 800)),
+        #tabPanel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '100%',height = 800),#plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
+        tabPanel('Yearly Comparison',plotlyOutput("sf_plot"),plotlyOutput("swe_plot"))
+      )
     ) #mainPanel
   )#sidebarLayout
 )#fluidPage

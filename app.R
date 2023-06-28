@@ -92,23 +92,10 @@ server <- function(input, output) {
       mutate(name='Golden')
   })
   
-  # Lawson stream gauge
-  stream_dat_lawson <- reactive({
-    importDVs(staid = '06716500',code = var_code, stat=stat_code,sdate = input$startdate, edate = input$enddate) %>% 
-      mutate(year=year(dates)) %>%
-      mutate(month=month(dates)) %>% 
-      mutate(yday=yday(dates)) %>% 
-      mutate(name='Lawson')
-  })
-  
-  # combine both into one dataframe
-  stream_dat_both <- reactive({
-    bind_rows(stream_dat_golden(),stream_dat_lawson())
-  })
   
   # combine stream gauge and snotel data into a single dataframe
   dat_comb <-  reactive({
-    dplyr::left_join(stream_dat_both(),select(snotel_dat,-c(year,yday)),by=c("dates"="date"))
+    dplyr::left_join(stream_dat_golden(),select(snotel_dat,-c(year,yday)),by=c("dates"="date"))
   })
   
   # Make main timeseries figure with 4 panels
@@ -118,7 +105,6 @@ server <- function(input, output) {
     p1 <- dat_comb() %>% 
       plot_ly(x=~dates, y=~val) %>% 
       add_lines(data=dat_comb() %>% filter(name=='Golden'), name='Golden') %>% 
-      add_lines(data=dat_comb() %>% filter(name=='Lawson'), name='Lawson') %>% 
       add_lines(x=lubridate::ymd("2021-06-08"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
       add_lines(x=lubridate::ymd("2022-06-14"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
       add_lines(x=lubridate::ymd("2023-06-01"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
@@ -196,11 +182,10 @@ server <- function(input, output) {
   #---------------------------------------------
   
   m<-leaflet() %>%
-    addProviderTiles(providers$OpenTopoMap) %>% 
-    #addTiles() %>%  # Add default OpenStreetMap map tiles
+#    addProviderTiles(providers$OpenTopoMap) %>% 
+    addTiles() %>%
     addMarkers(lng=-105.9,  lat=39.67,  popup="Loveland Basin Snotel Site") %>% 
-    addMarkers(lng=-105.235,lat=39.753, popup="USGS Stream Gauge: Golden")  %>% 
-    addMarkers(lng=-105.62, lat=39.75,  popup="USGS Stream Gauge: Lawson")
+    addMarkers(lng=-105.235,lat=39.753, popup="USGS Stream Gauge: Golden")
   
   output$map <- renderLeaflet(
     m

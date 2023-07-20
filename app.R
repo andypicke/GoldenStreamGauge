@@ -17,6 +17,7 @@ library(waterData)
 library(lubridate)
 library(dplyr)
 library(plotly)
+library(DT)
 
 
 #---------------------------------------------
@@ -37,8 +38,13 @@ ui <- fluidPage(
   # Sidebar with a date range input
   sidebarLayout(
     sidebarPanel(
-      dateInput("startdate",label = "Startdate",val=lubridate::ymd(paste(lubridate::year(Sys.Date())-2,"-01-01"))),
-      dateInput("enddate",label = "Enddate",value=Sys.Date(),max = Sys.Date()),
+      dateInput("startdate",
+                label = "Startdate",
+                val=lubridate::ymd(paste(lubridate::year(Sys.Date())-2,"-01-01"))),
+      dateInput("enddate",
+                label = "Enddate",
+                value=Sys.Date(),
+                max = Sys.Date()),
       h5(paste('Most recent snotel data included:',as.character(max(snotel_dat$date))))
     ),
     
@@ -47,7 +53,7 @@ ui <- fluidPage(
       tabsetPanel(
         tabPanel('About',h3("Use this app to explore streamflow conditions on Clear Creek in Golden CO, as well as related snowpack and weather conditions from a snotel station near its source."),
                  h4("The time-series figure has 4 panels (*Note they are interactive so you can pan, zoom, select etc.. "),
-                 h5("(1) A timeseries of streamflow on Clear Creek from USGS stations at Golden, and from further upstream at Lawson."),
+                 h5("(1) A timeseries of streamflow on Clear Creek from USGS stations at Golden"),
                  h5("(2) Snow water equivalent (ie snowpack) at the Loveland Basin snotel site."),
                  h5("(3) Precipitation at the snotel site."),
                  h5("(4) Average temperature at the snotel site."),
@@ -61,7 +67,8 @@ ui <- fluidPage(
         tabPanel('Map of Stations',leafletOutput("map",width = '100%')),
         tabPanel('Time-series',plotlyOutput("tsPlot",width = '100%',height = 800)),
         #tabPanel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '100%',height = 800),#plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
-        tabPanel('Yearly Comparison',plotlyOutput("sf_plot"),plotlyOutput("swe_plot"))
+        tabPanel('Yearly Comparison',plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
+        tabPanel('Data Table',DTOutput("dat_table") )
       )
     ) #mainPanel
   )#sidebarLayout
@@ -85,17 +92,23 @@ server <- function(input, output) {
   
   # Golden stream gauge
   stream_dat_golden <- reactive({
-    importDVs(staid = '06719505',code = var_code, stat=stat_code,sdate = input$startdate, edate = input$enddate) %>% 
-      mutate(year=year(dates)) %>%
-      mutate(month=month(dates)) %>% 
-      mutate(yday=yday(dates))%>% 
-      mutate(name='Golden')
+    waterData::importDVs(staid = '06719505',
+                         code = var_code,
+                         stat=stat_code,
+                         sdate = input$startdate,
+                         edate = input$enddate) %>% 
+      select(-staid) %>% 
+      mutate(year=year(dates),
+             month=month(dates),
+             yday=yday(dates),
+             name='Golden')
   })
   
   
   # combine stream gauge and snotel data into a single dataframe
   dat_comb <-  reactive({
-    dplyr::left_join(stream_dat_golden(),select(snotel_dat,-c(year,yday)),by=c("dates"="date"))
+    dplyr::left_join(stream_dat_golden(),select(snotel_dat,-c(year,yday)),
+                     by=c("dates"="date"))
   })
   
   # Make main timeseries figure with 4 panels
@@ -109,6 +122,7 @@ server <- function(input, output) {
       add_lines(x=lubridate::ymd("2022-06-14"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
       add_lines(x=lubridate::ymd("2023-06-01"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="red",dash='dash'),name='Golden Creek Closed') %>% 
       add_lines(x=lubridate::ymd("2021-06-18"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="green",dash='dash'),name='Opened') %>% 
+      add_lines(x=lubridate::ymd("2023-07-04"),y=range(dat_comb()$val,na.rm = TRUE),line=list(color="green",dash='dash'),name='Opened') %>% 
       layout(xaxis=list(title="Date"),
              yaxis=list(title="Streamflow [ft^3/s]"))
     
@@ -182,7 +196,7 @@ server <- function(input, output) {
   #---------------------------------------------
   
   m<-leaflet() %>%
-#    addProviderTiles(providers$OpenTopoMap) %>% 
+    #    addProviderTiles(providers$OpenTopoMap) %>% 
     addTiles() %>%
     addMarkers(lng=-105.9,  lat=39.67,  popup="Loveland Basin Snotel Site") %>% 
     addMarkers(lng=-105.235,lat=39.753, popup="USGS Stream Gauge: Golden")
@@ -191,6 +205,16 @@ server <- function(input, output) {
     m
   )
   
+  # data table
+  output$dat_table <- renderDT({
+    dat_comb() %>% 
+      select(-c(name,qualcode,year,month,yday,temperature_min,temperature_max)) %>% 
+      dplyr::rename(swe=snow_water_equivalent,
+                    temp_mean = temperature_mean,
+                    streamflow = val) %>% 
+      datatable(rownames = FALSE,
+                extensions = "Responsive")
+  })
   
   #---------------------------------------------
 } # END Server function

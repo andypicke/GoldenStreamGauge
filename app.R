@@ -213,8 +213,13 @@ server <- function(input, output) {
                     temp_mean = temperature_mean,
                     streamflow = val) %>% 
       datatable(rownames = FALSE,
-                extensions = "Responsive")
-  })
+                extensions = c("Responsive","Buttons"),
+                options = list(
+                  buttons = c("excel","csv","pdf"),
+                  dom = "Bftip")
+      )
+  },
+  server = FALSE)
   
   #---------------------------------------------
 } # END Server function

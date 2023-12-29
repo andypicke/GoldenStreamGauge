@@ -240,6 +240,7 @@ server <- function(input, output) {
           temp_mean = temperature_mean,
           streamflow = val
         ) %>%
+        arrange(desc(dates)) %>% 
         datatable(
           rownames = FALSE,
           extensions = c("Responsive", "Buttons"),

@@ -11,6 +11,7 @@
 #---------------------------------------------
 
 # Load Libraries
+library(here)
 library(shiny)
 library(leaflet)
 library(waterData)
@@ -24,7 +25,7 @@ library(DT)
 # Read in snotel data (pre-downloaded to save time)
 #---------------------------------------------
 
-snotel_dat <- readRDS("data/LB_snotel.rds")
+snotel_dat <- readRDS(here("data","LB_snotel.rds"))
 
 
 # =================================================
@@ -96,7 +97,7 @@ server <- function(input, output) {
   # Download stream gauge data
   #---------------------------------------------
   stat_code <- "00003" # code for daily mean
-  var_code <- "00060" # code for streamflow (discharge)
+  var_code  <- "00060" # code for streamflow (discharge)
   
   # Golden stream gauge
   stream_dat_golden <- reactive({

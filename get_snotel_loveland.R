@@ -5,6 +5,7 @@
 # 2019/01/13 - Updated for new version of snotelr package
 #
 
+library(here)
 library(snotelr)
 library(dplyr)
 library(purrr)
@@ -36,6 +37,8 @@ df_loveland <- df_loveland %>%
     yday = lubridate::yday(date)
   )
 
-saveRDS(df_loveland, file = "data/LB_snotel.rds")
+saveRDS(df_loveland, 
+        file = here("data","LB_snotel.rds")
+        )
 
 # df %>% ggplot(aes(yday,snow_water_equivalent,group=year))+geom_line(aes(col=as.factor(year)))+xlim(0,100)

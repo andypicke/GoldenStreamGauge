@@ -55,12 +55,12 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel(
-          "About", h3("Use this app to explore streamflow conditions on Clear Creek in Golden CO, as well as related snowpack and weather conditions from a snotel station near its source."),
-          h4("The time-series figure has 4 panels (*Note they are interactive so you can pan, zoom, select etc.. "),
-          h5("(1) A timeseries of streamflow on Clear Creek from USGS stations at Golden"),
-          h5("(2) Snow water equivalent (ie snowpack) at the Loveland Basin snotel site."),
-          h5("(3) Precipitation at the snotel site."),
-          h5("(4) Average temperature at the snotel site."),
+          "About", h4("Explore streamflow on Clear Creek in Golden CO, as well as nearby snowpack and weather conditions."),
+          h5("The time-series figure has 4 panels (*Note they are interactive so you can pan, zoom, select etc.. "),
+          h6("(1) A timeseries of streamflow on Clear Creek from USGS stations at Golden"),
+          h6("(2) Snow water equivalent (ie snowpack) at the Loveland Basin snotel site."),
+          h6("(3) Precipitation at the snotel site."),
+          h6("(4) Average temperature at the snotel site."),
           h4(
             "You can also view stream gauge data and camera at the",
             a(href = "https://waterdata.usgs.gov/monitoring-location/06719505/#parameterCode=00060&period=P7D&compare=true", "USGS website")
@@ -77,8 +77,7 @@ ui <- fluidPage(
         ),
         tabPanel("Map of Stations", leafletOutput("map", width = "100%")),
         tabPanel("Time-series", plotlyOutput("tsPlot", width = "100%", height = 800)),
-        tabPanel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '100%',height = '100%'),#plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
-        #tabPanel("Yearly Comparison", plotlyOutput("sf_plot"), plotlyOutput("swe_plot")),
+        tabPanel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '80%',height = '100%'),
         tabPanel("Data Table", DTOutput("dat_table"))
       )
     ) # mainPanel
@@ -92,6 +91,7 @@ ui <- fluidPage(
 # =================================================
 # Define server logic
 # =================================================
+
 server <- function(input, output) {
   #---------------------------------------------
   # Download stream gauge data
@@ -125,7 +125,10 @@ server <- function(input, output) {
     )
   })
   
+  #---------------------------------------------
   # Make main timeseries figure with 4 panels
+  #---------------------------------------------
+  
   output$tsPlot <- renderPlotly({
     # Streamflow
     p1 <- dat_comb() |>
@@ -179,7 +182,7 @@ server <- function(input, output) {
   
   
   #---------------------------------------------
-  # Plot comparing streamflow between years
+  # Plot comparing SWE and streamflow between years
   #---------------------------------------------
   # https://plotly.com/r/legend/
   
@@ -194,11 +197,6 @@ server <- function(input, output) {
       ) |>
       layout(legend = list(title = list(text = 'Year')))
     
-    #---------------------------------------------
-    # Plot comparing snowpack (SWE) between years
-    #---------------------------------------------
-    
-    #output$swe_plot <- renderPlotly({
     swe <- dat_comb() |>
       plot_ly(x = ~yday, y = ~snow_water_equivalent) |>
       add_lines(color = ~ as.factor(year), legendgroup = ~year, showlegend = F) |>
@@ -208,7 +206,7 @@ server <- function(input, output) {
       ) 
     
     yearly_comp <- plotly::subplot(sf, swe, nrows = 2, shareX = TRUE, shareY = FALSE, titleY = TRUE, margin = 0.1)
-  }) # renderPlotly
+  }) 
   
   
   

@@ -107,8 +107,8 @@ server <- function(input, output) {
       stat = stat_code,
       sdate = input$startdate,
       edate = input$enddate
-    ) %>%
-      select(-staid) %>%
+    ) |>
+      select(-staid) |>
       mutate(
         year = year(dates),
         month = month(dates),
@@ -128,50 +128,50 @@ server <- function(input, output) {
   # Make main timeseries figure with 4 panels
   output$tsPlot <- renderPlotly({
     # Streamflow
-    p1 <- dat_comb() %>%
-      plot_ly(x = ~dates, y = ~val) %>%
-      add_lines(data = dat_comb() %>% filter(name == "Golden"), name = "Golden") %>%
-      add_lines(x = lubridate::ymd("2021-06-08"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") %>%
-      add_lines(x = lubridate::ymd("2022-06-14"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") %>%
-      add_lines(x = lubridate::ymd("2023-06-01"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") %>%
-      add_lines(x = lubridate::ymd("2021-06-18"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "green", dash = "dash"), name = "Opened") %>%
-      add_lines(x = lubridate::ymd("2023-07-04"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "green", dash = "dash"), name = "Opened") %>%
+    p1 <- dat_comb() |>
+      plot_ly(x = ~dates, y = ~val) |>
+      add_lines(data = dat_comb() |> filter(name == "Golden"), name = "Golden") |>
+      add_lines(x = lubridate::ymd("2021-06-08"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") |>
+      add_lines(x = lubridate::ymd("2022-06-14"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") |>
+      add_lines(x = lubridate::ymd("2023-06-01"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") |>
+      add_lines(x = lubridate::ymd("2021-06-18"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "green", dash = "dash"), name = "Opened") |>
+      add_lines(x = lubridate::ymd("2023-07-04"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "green", dash = "dash"), name = "Opened") |>
       layout(
         xaxis = list(title = "Date"),
         yaxis = list(title = "Streamflow [ft^3/s]")
       )
     
     # Snowpack
-    p2 <- dat_comb() %>%
-      plot_ly(x = ~dates, y = ~snow_water_equivalent) %>%
-      add_lines(name = "SWE", fill = "tozeroy", color = I("Blue")) %>%
+    p2 <- dat_comb() |>
+      plot_ly(x = ~dates, y = ~snow_water_equivalent) |>
+      add_lines(name = "SWE", fill = "tozeroy", color = I("Blue")) |>
       layout(
         xaxis = list(title = "Date"),
         yaxis = list(title = "Snow Water Equiv. [mm]")
       )
     
     # Precipitation
-    p3 <- dat_comb() %>%
-      plot_ly(x = ~dates, y = ~precipitation) %>%
-      add_bars(name = "Precip", color = I("Black")) %>%
+    p3 <- dat_comb() |>
+      plot_ly(x = ~dates, y = ~precipitation) |>
+      add_bars(name = "Precip", color = I("Black")) |>
       layout(
         xaxis = list(title = "Date"),
         yaxis = list(title = "Precipitation [mm]")
       )
     
     # Temperature
-    p4 <- dat_comb() %>%
+    p4 <- dat_comb() |>
       plot_ly(type = "scatter", 
               x = ~dates, y = ~ temperature_mean * (9 / 5) + 32,
               name = "Temp",
               color = I("Black"),
-              mode = 'markers') %>% # Convert to fahrenheit
+              mode = 'markers') |> # Convert to fahrenheit
       layout(
         xaxis = list(title = "Date"),
         yaxis = list(title = "Mean Temp. [F]")
       )
     
-    p <- subplot(p1, p2, p3, p4, nrows = 4, shareX = TRUE, titleY = TRUE, margin = 0.05) %>% hide_legend()
+    p <- subplot(p1, p2, p3, p4, nrows = 4, shareX = TRUE, titleY = TRUE, margin = 0.05) |> hide_legend()
     
     p
   }) # renderPlotly
@@ -185,9 +185,9 @@ server <- function(input, output) {
   
   output$yearly_comp <- renderPlotly({
     
-    sf <- dat_comb() %>%
-      plot_ly(x = ~yday, y = ~val) %>%
-      add_lines(color = ~ as.factor(year), legendgroup = ~year) %>%
+    sf <- dat_comb() |>
+      plot_ly(x = ~yday, y = ~val) |>
+      add_lines(color = ~ as.factor(year), legendgroup = ~year) |>
       layout(
         xaxis = list(title = "Yearday"),
         yaxis = list(title = "Streamflow [ft^3/s]")
@@ -199,9 +199,9 @@ server <- function(input, output) {
     #---------------------------------------------
     
     #output$swe_plot <- renderPlotly({
-    swe <- dat_comb() %>%
-      plot_ly(x = ~yday, y = ~snow_water_equivalent) %>%
-      add_lines(color = ~ as.factor(year), legendgroup = ~year, showlegend = F) %>%
+    swe <- dat_comb() |>
+      plot_ly(x = ~yday, y = ~snow_water_equivalent) |>
+      add_lines(color = ~ as.factor(year), legendgroup = ~year, showlegend = F) |>
       layout(
         xaxis = list(title = "Yearday"),
         yaxis = list(title = "SWE")
@@ -217,10 +217,10 @@ server <- function(input, output) {
   # Plot map of station locations using leaflet
   #---------------------------------------------
   
-  m <- leaflet() %>%
-    #    addProviderTiles(providers$OpenTopoMap) %>%
-    addTiles() %>%
-    addMarkers(lng = -105.9, lat = 39.67, popup = "Loveland Basin Snotel Site") %>%
+  m <- leaflet() |>
+    #    addProviderTiles(providers$OpenTopoMap) |>
+    addTiles() |>
+    addMarkers(lng = -105.9, lat = 39.67, popup = "Loveland Basin Snotel Site") |>
     addMarkers(lng = -105.235, lat = 39.753, popup = "USGS Stream Gauge: Golden")
   
   output$map <- renderLeaflet(
@@ -232,14 +232,14 @@ server <- function(input, output) {
   #---------------------------------------------
   output$dat_table <- renderDT(
     {
-      dat_comb() %>%
-        select(-c(name, qualcode, year, month, yday, temperature_min, temperature_max)) %>%
+      dat_comb() |>
+        select(-c(name, qualcode, year, month, yday, temperature_min, temperature_max)) |>
         dplyr::rename(
           swe = snow_water_equivalent,
           temp_mean = temperature_mean,
           streamflow = val
-        ) %>%
-        arrange(desc(dates)) %>% 
+        ) |>
+        arrange(desc(dates)) |> 
         datatable(
           rownames = FALSE,
           extensions = c("Responsive", "Buttons"),

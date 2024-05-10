@@ -77,8 +77,8 @@ ui <- fluidPage(
         ),
         tabPanel("Map of Stations", leafletOutput("map", width = "100%")),
         tabPanel("Time-series", plotlyOutput("tsPlot", width = "100%", height = 800)),
-        # tabPanel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '100%',height = 800),#plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
-        tabPanel("Yearly Comparison", plotlyOutput("sf_plot"), plotlyOutput("swe_plot")),
+        tabPanel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '100%',height = '100%'),#plotlyOutput("sf_plot"),plotlyOutput("swe_plot")),
+        #tabPanel("Yearly Comparison", plotlyOutput("sf_plot"), plotlyOutput("swe_plot")),
         tabPanel("Data Table", DTOutput("dat_table"))
       )
     ) # mainPanel
@@ -165,7 +165,7 @@ server <- function(input, output) {
               x = ~dates, y = ~ temperature_mean * (9 / 5) + 32,
               name = "Temp",
               color = I("Black"),
-    mode = 'markers') %>% # Convert to fahrenheit
+              mode = 'markers') %>% # Convert to fahrenheit
       layout(
         xaxis = list(title = "Date"),
         yaxis = list(title = "Mean Temp. [F]")
@@ -181,37 +181,33 @@ server <- function(input, output) {
   #---------------------------------------------
   # Plot comparing streamflow between years
   #---------------------------------------------
+  # https://plotly.com/r/legend/
   
-  # output$yearly_comp <- renderPlotly({
-  
-  output$sf_plot <- renderPlotly({
+  output$yearly_comp <- renderPlotly({
+    
     sf <- dat_comb() %>%
-      filter(name == "Golden") %>%
       plot_ly(x = ~yday, y = ~val) %>%
-      add_lines(color = ~ as.factor(year)) %>%
+      add_lines(color = ~ as.factor(year), legendgroup = ~year) %>%
       layout(
         xaxis = list(title = "Yearday"),
-        yaxis = list(title = "Streamflow [ft^3/s]"),
-        title = "Streamflow at Golden During Different Years"
-      )
-  }) # renderPlotly
-  
-  
-  #---------------------------------------------
-  # Plot comparing snowpack (SWE) between years
-  #---------------------------------------------
-  
-  output$swe_plot <- renderPlotly({
+        yaxis = list(title = "Streamflow [ft^3/s]")
+      ) |>
+      layout(legend = list(title = list(text = 'Year')))
+    
+    #---------------------------------------------
+    # Plot comparing snowpack (SWE) between years
+    #---------------------------------------------
+    
+    #output$swe_plot <- renderPlotly({
     swe <- dat_comb() %>%
       plot_ly(x = ~yday, y = ~snow_water_equivalent) %>%
-      add_lines(color = ~ as.factor(year)) %>%
+      add_lines(color = ~ as.factor(year), legendgroup = ~year, showlegend = F) %>%
       layout(
         xaxis = list(title = "Yearday"),
-        yaxis = list(title = "SWE"),
-        title = "Snowpack at Loveland During Different Years"
-      )
+        yaxis = list(title = "SWE")
+      ) 
     
-    # yearly_comp <- subplot(sf,swe,nrows = 2, shareX = TRUE, shareY = FALSE, titleY = TRUE,margin = 0.05)# %>% hide_legend()
+    yearly_comp <- plotly::subplot(sf, swe, nrows = 2, shareX = TRUE, shareY = FALSE, titleY = TRUE, margin = 0.1)
   }) # renderPlotly
   
   
@@ -231,7 +227,9 @@ server <- function(input, output) {
     m
   )
   
+  #---------------------------------------------
   # data table
+  #---------------------------------------------
   output$dat_table <- renderDT(
     {
       dat_comb() %>%

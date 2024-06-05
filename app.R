@@ -137,6 +137,7 @@ server <- function(input, output) {
       add_lines(x = lubridate::ymd("2021-06-08"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") |>
       add_lines(x = lubridate::ymd("2022-06-14"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") |>
       add_lines(x = lubridate::ymd("2023-06-01"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") |>
+      add_lines(x = lubridate::ymd("2024-06-05"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") |>
       add_lines(x = lubridate::ymd("2021-06-18"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "green", dash = "dash"), name = "Opened") |>
       add_lines(x = lubridate::ymd("2023-07-04"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "green", dash = "dash"), name = "Opened") |>
       layout(
@@ -216,7 +217,6 @@ server <- function(input, output) {
   #---------------------------------------------
   
   m <- leaflet() |>
-    #    addProviderTiles(providers$OpenTopoMap) |>
     addTiles() |>
     addMarkers(lng = -105.9, lat = 39.67, popup = "Loveland Basin Snotel Site") |>
     addMarkers(lng = -105.235, lat = 39.753, popup = "USGS Stream Gauge: Golden")

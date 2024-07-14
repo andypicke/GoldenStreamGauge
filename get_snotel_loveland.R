@@ -11,7 +11,7 @@ library(dplyr)
 library(purrr)
 
 
-
+# make into function so we can use *safely*
 get_snotel <- function() {
   dat_loveland <- snotelr::snotel_download(site_id = 602, internal = TRUE)
   return(dat_loveland)
@@ -27,11 +27,12 @@ while (err == FALSE) {
 }
 dat_loveland <- out$result
 
-df_loveland <- dat_loveland %>%
+df_loveland <- dat_loveland |>
   dplyr::select(-c(network, state, site_name, description, start, end, latitude, longitude, elev, county, site_id))
+
 df_loveland$date <- as.Date(df_loveland$date)
 
-df_loveland <- df_loveland %>%
+df_loveland <- df_loveland |>
   mutate(
     year = lubridate::year(date),
     yday = lubridate::yday(date)

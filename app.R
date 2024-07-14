@@ -93,6 +93,9 @@ ui <- fluidPage(
 # =================================================
 
 server <- function(input, output) {
+  
+  
+  
   #---------------------------------------------
   # Download stream gauge data
   #---------------------------------------------
@@ -140,6 +143,7 @@ server <- function(input, output) {
       add_lines(x = lubridate::ymd("2024-06-05"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "red", dash = "dash"), name = "Golden Creek Closed") |>
       add_lines(x = lubridate::ymd("2021-06-18"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "green", dash = "dash"), name = "Opened") |>
       add_lines(x = lubridate::ymd("2023-07-04"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "green", dash = "dash"), name = "Opened") |>
+      add_lines(x = lubridate::ymd("2024-07-01"), y = range(dat_comb()$val, na.rm = TRUE), line = list(color = "green", dash = "dash"), name = "Opened") |>
       layout(
         xaxis = list(title = "Date"),
         yaxis = list(title = "Streamflow [ft^3/s]")

@@ -1,0 +1,159 @@
+---
+title: "analysis"
+format: html
+editor: visual
+---
+
+
+
+```{r}
+
+library(tidyverse)
+library(here)
+library(plotly)
+library(glue)
+
+```
+
+```{r}
+
+snotel_dat <- readRDS(here("data","LB_snotel.rds"))
+
+```
+
+
+```{r}
+
+snotel_dat |>
+  ggplot(aes(date, snow_water_equivalent)) +
+  geom_line()
+  
+
+```
+
+```{r}
+
+
+snotel_dat |>
+  plot_ly(x = ~date, y = ~snow_water_equivalent) |>
+  add_lines(name = "SWE") |>
+  layout(
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Snow Water Equiv.")
+      )
+
+```
+
+
+```{r}
+
+
+p1 <- snotel_dat |>
+  plot_ly(x = ~date, y = ~snow_water_equivalent) |>
+  add_lines(name = "SWE") |>
+  layout(
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Snow Water Equiv.")
+      )
+
+p2 <- snotel_dat |>
+  plot_ly(x = ~date, y = ~temperature_mean) |>
+  add_lines(name = "Mean Temp") |>
+  layout(
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Mean Temp")
+      )
+
+p3 <- snotel_dat |>
+  plot_ly(x = ~date, y = ~precipitation, name = "Precip") |>
+  add_bars(name = "Precip") |>
+  layout(
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Precip")
+      )
+
+subplot(p1, p2, p3, nrows = 3, shareX = TRUE, titleY = TRUE)
+
+```
+
+```{r}
+
+p1 <- snotel_dat |>
+  filter(year > 2015) |>
+  plot_ly() |>
+  add_lines(x = ~yday, y = ~snow_water_equivalent, color = ~as.factor(year)) |>
+  layout(
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Snow Water Equiv.")
+      )
+
+p2 <- snotel_dat |>
+  filter(year > 2015) |>
+  plot_ly() |>
+  add_lines(x = ~yday, y = ~temperature_mean, color = ~as.factor(year)) |>
+  layout(
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Mean Temp")
+      )
+
+
+subplot(p1, p2, nrows = 2, shareX = TRUE, titleY = TRUE)
+
+```
+
+```{r}
+
+library(waterData)
+
+stat_code <- "00003" # daily mean
+var_code <- "00060" # streamflow (discharge)
+
+stream_dat_golden <- importDVs(staid = "06719505", code = var_code, stat = stat_code, sdate = "2017-01-01", edate = "2019-06-15") |>
+  mutate(year = year(dates)) |>
+  mutate(month = month(dates)) |>
+  mutate(yday = yday(dates)) |>
+  mutate(name = "Golden")
+
+```
+
+
+```{r}
+
+stream_dat_golden |>
+  plot_ly() |>
+  add_lines(x = ~dates, y = ~val) |>
+  layout(
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Streamflow")
+      )
+
+
+
+```
+
+
+```{r}
+
+datcomb <- snotel_dat |>
+  inner_join(stream_dat_golden, by = join_by(date == dates))
+
+p1 <- datcomb |>
+  plot_ly() |>
+  add_lines(x = ~yday.x, y = ~snow_water_equivalent, color = ~as.factor(year.x)) |>
+  layout(
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Snow Water Equiv.")
+      )
+
+p2 <- datcomb |>
+  plot_ly() |>
+  add_lines(x = ~yday.x, y = ~val, color = ~as.factor(year.x)) |>
+  layout(
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Streamflow")
+      )
+
+subplot(p1, p2, nrows = 2, shareX = TRUE)
+
+```
+

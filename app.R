@@ -13,6 +13,7 @@
 # Load Libraries
 library(here)
 library(shiny)
+library(bslib)
 library(leaflet)
 library(waterData)
 library(lubridate)
@@ -31,58 +32,54 @@ snotel_dat <- readRDS(here("data","LB_snotel.rds"))
 # =================================================
 # Define UI for application
 # =================================================
-ui <- fluidPage(
+
+ui <-   page_sidebar(
   
   # Application title
-  titlePanel("Clear Creek Stream Flow"),
+  title = "Clear Creek Stream Flow",
   
   # Sidebar with a date range input
-  sidebarLayout(
-    sidebarPanel(
-      dateInput("startdate",
-                label = "Startdate",
-                val = lubridate::ymd(paste(lubridate::year(Sys.Date()) - 2, "-01-01"))
-      ),
-      dateInput("enddate",
-                label = "Enddate",
-                value = Sys.Date(),
-                max = Sys.Date()
-      ),
-      h5(paste("Most recent snotel data included:", as.character(max(snotel_dat$date))))
+  sidebar = sidebar(
+    dateInput("startdate",
+              label = "Startdate",
+              val = lubridate::ymd(paste(lubridate::year(Sys.Date()) - 2, "-01-01"))
     ),
-    
-    # Set up mainPanel and tabs
-    mainPanel(
-      tabsetPanel(
-        tabPanel(
-          "About", h4("Explore streamflow on Clear Creek in Golden CO, as well as nearby snowpack and weather conditions."),
-          h5("The time-series figure has 4 panels (*Note they are interactive so you can pan, zoom, select etc.. "),
-          h6("(1) A timeseries of streamflow on Clear Creek from USGS stations at Golden"),
-          h6("(2) Snow water equivalent (ie snowpack) at the Loveland Basin snotel site."),
-          h6("(3) Precipitation at the snotel site."),
-          h6("(4) Average temperature at the snotel site."),
-          h4(
-            "You can also view stream gauge data and camera at the",
-            a(href = "https://waterdata.usgs.gov/monitoring-location/06719505/#parameterCode=00060&period=P7D&compare=true", "USGS website")
-          ),
-          h4(
-            "Check City of Golden Clear Creek",
-            a(href = "https://www.visitgolden.com/plan-your-visit/creek-info/", "status")
-          ),
-          h5("Snotel data (snow water equivalent, precipitation, and temperature) is from a station at Loveland Basin (near Clear Creek source) and obtained using the 'snotelr' R package. Streamflow data is from USGS stream gauges along Clear Creek and obtained using the 'waterData' package. The map tab shows the location of each station."),
-          h4(
-            "Source code for this Shiny app is available on github at: ",
-            a(href = "https://github.com/andypicke/GoldenStreamGauge", "GoldenStreamGauge")
-          )
-        ),
-        tabPanel("Map of Stations", leafletOutput("map", width = "100%")),
-        tabPanel("Time-series", plotlyOutput("tsPlot", width = "100%", height = 800)),
-        tabPanel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '80%',height = '100%'),
-        tabPanel("Data Table", DTOutput("dat_table"))
+    dateInput("enddate",
+              label = "Enddate",
+              value = Sys.Date(),
+              max = Sys.Date()
+    ),
+    h5(paste("Most recent snotel data included:", as.character(max(snotel_dat$date))))
+  ),
+  
+  navset_card_underline(
+    nav_panel(
+      "About", h4("Explore streamflow on Clear Creek in Golden CO, as well as nearby snowpack and weather conditions."),
+      h5("The time-series figure has 4 panels (*Note they are interactive so you can pan, zoom, select etc.. "),
+      h6("(1) A timeseries of streamflow on Clear Creek from USGS stations at Golden"),
+      h6("(2) Snow water equivalent (ie snowpack) at the Loveland Basin snotel site."),
+      h6("(3) Precipitation at the snotel site."),
+      h6("(4) Average temperature at the snotel site."),
+      h4(
+        "You can also view stream gauge data and camera at the",
+        a(href = "https://waterdata.usgs.gov/monitoring-location/06719505/#parameterCode=00060&period=P7D&compare=true", "USGS website")
+      ),
+      h4(
+        "Check City of Golden Clear Creek",
+        a(href = "https://www.visitgolden.com/plan-your-visit/creek-info/", "status")
+      ),
+      h5("Snotel data (snow water equivalent, precipitation, and temperature) is from a station at Loveland Basin (near Clear Creek source) and obtained using the 'snotelr' R package. Streamflow data is from USGS stream gauges along Clear Creek and obtained using the 'waterData' package. The map tab shows the location of each station."),
+      h4(
+        "Source code for this Shiny app is available on github at: ",
+        a(href = "https://github.com/andypicke/GoldenStreamGauge", "GoldenStreamGauge")
       )
-    ) # mainPanel
-  ) # sidebarLayout
-) # fluidPage
+    ),
+    nav_panel("Map of Stations", leafletOutput("map", width = "100%")),
+    nav_panel("Time-series", plotlyOutput("tsPlot", width = "100%", height = 800)),
+    nav_panel('Yearly Comparison',plotlyOutput("yearly_comp"),width = '80%',height = '100%'),
+    nav_panel("Data Table", DTOutput("dat_table"))
+  ) # navset_card_underline()
+) # page_sidebar()
 
 
 
@@ -225,9 +222,7 @@ server <- function(input, output) {
     addMarkers(lng = -105.9, lat = 39.67, popup = "Loveland Basin Snotel Site") |>
     addMarkers(lng = -105.235, lat = 39.753, popup = "USGS Stream Gauge: Golden")
   
-  output$map <- renderLeaflet(
-    m
-  )
+  output$map <- renderLeaflet(m)
   
   #---------------------------------------------
   # data table
